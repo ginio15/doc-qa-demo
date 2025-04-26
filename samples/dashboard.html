@@ -1,0 +1,130 @@
+
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Global Warming Visualization Dashboard</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 20px;
+                background-color: #f5f5f5;
+            }
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+            }
+            h1, h2 {
+                color: #333;
+            }
+            .dashboard-item {
+                background-color: white;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                margin-bottom: 20px;
+                padding: 20px;
+            }
+            .dashboard-item img {
+                max-width: 100%;
+                height: auto;
+                display: block;
+                margin: 0 auto;
+            }
+            .description {
+                margin-top: 15px;
+                line-height: 1.5;
+            }
+            .footer {
+                text-align: center;
+                margin-top: 30px;
+                color: #666;
+                font-size: 0.9em;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Global Warming Visualization Dashboard</h1>
+            <p>This dashboard presents visualizations of global temperature trends from 1880 to 2025, highlighting the evidence for global warming.</p>
+    
+            <div class="dashboard-item">
+                <h2>Long-Term Temperature Trend</h2>
+                <img src="long_term_trend.png" alt="Long-Term Temperature Trend">
+                <div class="description">
+                    <p>This visualization shows the annual global temperature anomalies from 1880 to 2025, along with 5-year and 10-year moving averages. The clear upward trend, especially since the 1970s, demonstrates the reality of global warming. The linear trend line indicates the average rate of warming over the entire period.</p>
+                </div>
+            </div>
+            
+            <div class="dashboard-item">
+                <h2>Warming Stripes</h2>
+                <img src="warming_stripes.png" alt="Warming Stripes">
+                <div class="description">
+                    <p>Inspired by climate scientist Ed Hawkins, this visualization represents each year from 1880 to 2025 as a colored stripe, with blue for cooler years and red for warmer years. The progression from predominantly blue to predominantly red stripes provides a striking visual representation of global warming that is immediately understandable without requiring scientific expertise.</p>
+                </div>
+            </div>
+            
+            <div class="dashboard-item">
+                <h2>Decadal Temperature Trends</h2>
+                <img src="decadal_trends.png" alt="Decadal Temperature Trends">
+                <div class="description">
+                    <p>This bar chart shows the average temperature anomaly for each decade from the 1880s to the 2020s. The clear progression from cooler (blue) to warmer (red) decades illustrates the long-term warming trend. Error bars represent the standard deviation within each decade, showing the variability of temperatures.</p>
+                </div>
+            </div>
+            
+            <div class="dashboard-item">
+                <h2>Seasonal Temperature Trends</h2>
+                <img src="seasonal_trends.png" alt="Seasonal Temperature Trends">
+                <div class="description">
+                    <p>These visualizations show how global warming affects different seasons. The left panel shows the warming rate for each season, indicating which seasons are warming faster. The right panel shows how average temperatures have changed across different time periods for each season, revealing that warming is occurring across all seasons but at different rates.</p>
+                </div>
+            </div>
+            
+            <div class="dashboard-item">
+                <h2>Extreme Temperature Years</h2>
+                <img src="extreme_years.png" alt="Extreme Temperature Years">
+                <div class="description">
+                    <p>The top panel shows the 10 warmest and 10 coldest years in the record. Note that all of the warmest years have occurred recently, while all of the coldest years occurred in the early part of the record. The bottom panel shows the number of extremely warm years in each decade, with a dramatic increase in recent decades.</p>
+                </div>
+            </div>
+            
+            <div class="dashboard-item">
+                <h2>Acceleration of Global Warming</h2>
+                <img src="acceleration.png" alt="Acceleration of Global Warming">
+                <div class="description">
+                    <p>This visualization shows how the rate of warming has changed over time. Each point represents the warming rate (in °C per decade) calculated over a 30-year window centered on that year. The upward trend in recent decades indicates that global warming is not only continuing but accelerating.</p>
+                </div>
+            </div>
+            
+            <div class="dashboard-item">
+                <h2>Monthly Temperature Heatmap</h2>
+                <img src="monthly_heatmap.png" alt="Monthly Temperature Heatmap">
+                <div class="description">
+                    <p>This heatmap shows temperature anomalies for each month of each year from 1880 to 2025. The progression from blue (cooler) to red (warmer) moving from bottom to top clearly illustrates the warming trend across all months of the year.</p>
+                </div>
+            </div>
+            
+            <div class="dashboard-item">
+                <h2>Comparative Time Periods</h2>
+                <img src="comparative_periods.png" alt="Comparative Time Periods">
+                <div class="description">
+                    <p>This visualization compares temperature trends across four distinct time periods: 1880-1920, 1921-1960, 1961-2000, and 2001-2025. The clear separation between these periods, with each successive period showing higher temperatures, provides strong evidence for a consistent warming trend.</p>
+                </div>
+            </div>
+            
+            <div class="dashboard-item">
+                <h2>Temperature Distribution by Period</h2>
+                <img src="period_boxplots.png" alt="Temperature Distribution by Period">
+                <div class="description">
+                    <p>These boxplots show the distribution of temperature anomalies for each time period. The progressive shift upward in the median and quartiles from earlier to later periods demonstrates that the entire distribution of temperatures has shifted toward warmer values, not just the extremes.</p>
+                </div>
+            </div>
+            
+            <div class="footer">
+                <p>Global Warming Visualization Project - Created using Python data analysis and visualization tools</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    
