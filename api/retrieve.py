@@ -4,7 +4,7 @@ Retrieval module implementing hybrid search (vector + keyword) for document QA.
 from typing import List, Dict, Any, Tuple, Optional, Union
 import numpy as np
 from collections import Counter
-
+ 
 try:
     from sklearn.metrics.pairwise import cosine_similarity
     import nltk

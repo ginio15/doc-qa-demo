@@ -1,7 +1,7 @@
 """
 Main FastAPI application with document QA endpoints.
 """
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional 
 import os
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,6 +16,7 @@ import shutil
 from ingest import DocumentIngestor
 from embed import EmbeddingService
 from retrieve import HybridRetriever
+from query_chroma import query_chroma
 
 # Initialize FastAPI app
 app = FastAPI(title="Document QA API")
@@ -32,16 +33,17 @@ app.add_middleware(
 # Define data directory for storing documents and embeddings
 DATA_DIR = os.getenv("DATA_DIR", "./data")
 DOCUMENTS_DIR = f"{DATA_DIR}/documents"
-EMBEDDINGS_FILE = f"{DATA_DIR}/embeddings.json"
+CHROMADB_PATH = os.getenv("CHROMADB_PATH", ".chromadb")
+COLLECTION_NAME = "docs"
 
 # Initialize services
 embedding_service = EmbeddingService()
-ingestor = DocumentIngestor()
+ingestor = DocumentIngestor(chromadb_path=CHROMADB_PATH, collection_name=COLLECTION_NAME)
 retriever = HybridRetriever(embedding_service=embedding_service)
 
 # Create data directories if they don't exist
 os.makedirs(DOCUMENTS_DIR, exist_ok=True)
-os.makedirs(os.path.dirname(EMBEDDINGS_FILE), exist_ok=True)
+os.makedirs(DATA_DIR, exist_ok=True)
 
 # Data models
 class QueryRequest(BaseModel):
@@ -57,51 +59,33 @@ class DocumentResponse(BaseModel):
     filename: str
     status: str
 
-# Helper functions
-def save_embeddings(embeddings: List[Dict[str, Any]]):
-    """Save embeddings to file."""
-    # Convert embeddings to serializable format
-    serializable_embeddings = []
-    for doc in embeddings:
-        doc_copy = doc.copy()
-        if "embedding" in doc_copy:
-            doc_copy["embedding"] = doc_copy["embedding"]  # already serializable
-        serializable_embeddings.append(doc_copy)
-    
-    with open(EMBEDDINGS_FILE, 'w') as f:
-        json.dump(serializable_embeddings, f)
-
-def load_embeddings() -> List[Dict[str, Any]]:
-    """Load embeddings from file."""
-    if not os.path.exists(EMBEDDINGS_FILE):
-        return []
-    
-    with open(EMBEDDINGS_FILE, 'r') as f:
-        return json.load(f)
-
 # Background processing functions
 def process_document_background(file_path: str, original_filename: str):
-    """Process a document in the background."""
+    """Process a document in the background using ChromaDB."""
     try:
-        # Load and chunk the document
-        chunks = ingestor.process_document(file_path)
+        # Use the ingest_file method to add the document to ChromaDB
+        doc_id = ingestor.ingest_file(file_path)
         
-        # Add original filename to metadata
-        for chunk in chunks:
-            chunk["metadata"]["original_filename"] = original_filename
+        # Update metadata with original filename
+        if ingestor.collection is not None:
+            # Get all chunks for this document
+            results = ingestor.collection.get(
+                where={"doc_id": doc_id}
+            )
+            
+            if results and results["ids"]:
+                # Update metadata for each chunk
+                for i, chunk_id in enumerate(results["ids"]):
+                    metadata = results["metadatas"][i] if "metadatas" in results else {}
+                    metadata["original_filename"] = original_filename
+                    
+                    # Update the metadata in ChromaDB
+                    ingestor.collection.update(
+                        ids=[chunk_id],
+                        metadatas=[metadata]
+                    )
         
-        # Generate embeddings
-        chunks_with_embeddings = embedding_service.embed_documents(chunks)
-        
-        # Load existing embeddings
-        existing_embeddings = load_embeddings()
-        
-        # Add new embeddings
-        existing_embeddings.extend(chunks_with_embeddings)
-        
-        # Save updated embeddings
-        save_embeddings(existing_embeddings)
-        
+        print(f"✅ Ingested {original_filename} with ID {doc_id}")
     except Exception as e:
         print(f"Error processing document: {e}")
 
@@ -145,38 +129,61 @@ async def upload_document(
 @app.post("/ask", response_model=QueryResponse)
 async def ask_question(request: QueryRequest):
     """Answer a question based on the document corpus."""
-    # Load embeddings
-    documents = load_embeddings()
+    if ingestor.collection is None:
+        raise HTTPException(status_code=500, detail="ChromaDB collection not initialized")
     
-    if not documents:
+    # Get the number of documents in the collection
+    collection_info = ingestor.collection.count()
+    if collection_info == 0:
         raise HTTPException(status_code=404, detail="No documents found in the corpus")
     
-    # Retrieve relevant documents
-    results = retriever.search(request.query, documents, top_k=request.top_k)
+    # Use query_chroma to get relevant documents
+    results = query_chroma(
+        query=request.query,
+        top_k=request.top_k,
+        chromadb_path=CHROMADB_PATH,
+        collection_name=COLLECTION_NAME
+    )
     
-    # Clean up results (remove embeddings from response)
+    # Format results for response
+    formatted_results = []
     for result in results:
+        # Remove embedding if present
         if "embedding" in result:
             del result["embedding"]
+        formatted_results.append(result)
     
     return {
         "query": request.query,
-        "results": results
+        "results": formatted_results
     }
 
 @app.get("/documents", response_model=List[str])
 async def list_documents():
     """List all documents that have been uploaded."""
-    documents = load_embeddings()
+    if ingestor.collection is None:
+        raise HTTPException(status_code=500, detail="ChromaDB collection not initialized")
     
-    # Extract unique filenames
-    filenames = set()
-    for doc in documents:
-        filename = doc["metadata"].get("original_filename")
-        if filename:
-            filenames.add(filename)
-            
-    return sorted(list(filenames))
+    # Get all documents from ChromaDB
+    try:
+        results = ingestor.collection.get()
+        
+        # Extract unique filenames from metadata
+        filenames = set()
+        if results and "metadatas" in results:
+            for metadata in results["metadatas"]:
+                if metadata and "original_filename" in metadata:
+                    filenames.add(metadata["original_filename"])
+                elif metadata and "source_file" in metadata:
+                    # Use the source_file as fallback
+                    source_file = metadata["source_file"]
+                    if source_file:
+                        filenames.add(os.path.basename(source_file))
+                        
+        return sorted(list(filenames))
+    except Exception as e:
+        print(f"Error listing documents: {e}")
+        return []
 
 # Run the application
 if __name__ == "__main__":

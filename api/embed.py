@@ -8,7 +8,7 @@ from functools import lru_cache
 
 # Try to import necessary libraries
 try:
-    import openai
+    import openai 
     from sentence_transformers import SentenceTransformer
     import torch
 except ImportError:
